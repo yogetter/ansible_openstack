@@ -47,7 +47,7 @@
   become: true
 
 - name: Run script
-  script: "./roles/newton_controller/scripts/create_keystone_environment.sh {{ controller_ip  }}" 
+  script: "./roles/newton_controller/scripts/create_keystone_environment.sh {{ controller_ip  }} none {{ admin_passwd }}" 
   become: true
 
 - name: Create adminrc

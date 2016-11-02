@@ -11,11 +11,9 @@
   apt: name=chrony state=latest
   become: true
 
-
 - name: Install software common
   apt: name=software-properties-common state=latest
   become: true
-
 
 - name: Install repository's key
   shell: add-apt-repository cloud-archive:newton 
@@ -36,6 +34,11 @@
   - memcached 
   - python-memcache
   become: true  
+
+- name: Configure hosts
+  lineinfile: "dest=/etc/hosts line='{{ controller_ip }} controller\n
+  {{ compute_ip }} compute' state=present"
+  become: true
 
 - name: Create mysql config file
   template: src=openstack.cnf.j2 dest=/etc/mysql/mariadb.conf.d/openstack.cnf

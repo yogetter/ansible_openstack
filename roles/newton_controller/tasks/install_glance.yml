@@ -11,7 +11,7 @@
   become: true
 
 - name: Create glance environment in keystone
-  script: "./roles/newton_controller/scripts/create_glance_environment.sh {{ controller_ip  }} {{ glance_passwd  }}"
+  script: "./roles/newton_controller/scripts/create_glance_environment.sh {{ controller_ip  }} {{ glance_passwd  }} {{ admin_passwd }}"
   become: true
 
 - name: Install glance

@@ -11,7 +11,7 @@
   become: true
 
 - name: Create neutron environment in keystone
-  script: "./roles/newton_controller/scripts/create_neutron_environment.sh {{ controller_ip  }} {{ neutron_passwd  }}"
+  script: "./roles/newton_controller/scripts/create_neutron_environment.sh {{ controller_ip  }} {{ neutron_passwd }} {{ admin_passwd }}"
   become: true
 
 - name: Install neutron

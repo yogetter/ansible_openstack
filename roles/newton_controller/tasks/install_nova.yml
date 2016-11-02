@@ -15,7 +15,7 @@
   become: true
 
 - name: Create nova environment in keystone
-  script: "./roles/newton_controller/scripts/create_nova_environment.sh {{ controller_ip  }} {{ nova_passwd  }}"
+  script: "./roles/newton_controller/scripts/create_nova_environment.sh {{ controller_ip  }} {{ nova_passwd  }} {{ admin_passwd }}"
   become: true
 
 - name: Install nova
