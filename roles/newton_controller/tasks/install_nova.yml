@@ -1,0 +1,98 @@
+---
+- name: Create nova databases
+  mysql_db: name=nova state=present login_password={{ db_passwd  }}
+  become: true 
+
+- name: Create nova_api databases
+  mysql_db: name=nova_api state=present login_password={{ db_passwd  }}
+  become: true
+
+- name: Create nova user
+  mysql_user: name=nova password={{ nova_passwd  }}  host={{ item[0]  }} priv={{ item[1]  }}.*:ALL,GRANT append_privs=yes login_password={{ nova_passwd  }} state=present 
+  with_nested:
+  - [ '%', 'localhost' ]
+  - [ 'nova', 'nova_api' ]
+  become: true
+
+- name: Create nova environment in keystone
+  script: "./roles/newton_controller/scripts/create_nova_environment.sh {{ controller_ip  }} {{ nova_passwd  }}"
+  become: true
+
+- name: Install nova
+  apt: name={{ item }} state=latest
+  with_items:
+  - nova-api 
+  - nova-conductor
+  - nova-consoleauth
+  - nova-novncproxy 
+  - nova-scheduler
+  become: true
+
+- name: Configure nova(1)
+  replace: dest=/etc/nova/nova.conf regexp='^connection=' replace='#connection='  backup=yes
+  become: true
+
+- name: Configure nova(2)
+  lineinfile: dest=/etc/nova/nova.conf insertafter={{ item.insertafter  }} line={{ item.line  }} backup=yes state=present
+  with_items:
+  - { insertafter: "^\\[database", line: "connection = mysql+pymysql://nova:{{ nova_passwd  }}@{{ controller_ip  }}/nova" }
+  - { insertafter: "^\\[api_database", line: "connection = mysql+pymysql://nova:{{ nova_passwd  }}@{{ controller_ip  }}/nova_api" }
+  become: true
+
+- name: Configure nova(3)
+  lineinfile: dest=/etc/nova/nova.conf insertafter='^\\[DEFAULT' line={{ item  }} backup=yes state=present
+  with_items:
+  - "transport_url = rabbit://openstack:{{ rabbit_passwd}}@{{ controller_ip }}" 
+  - "auth_strategy = keystone"
+  - "my_ip = {{ controller_ip  }}"
+  - "use_neutron = True"
+  - "firewall_driver = nova.virt.firewall.NoopFirewallDriver"
+  become: true
+
+- name: Configure nova(4)
+  lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[keystone_authtoken]\n
+  auth_uri = http://{{ controller_ip }}:5000\n
+  auth_url = http://{{ controller_ip }}:35357\n
+  memcached_servers = {{ controller_ip }}:11211\n
+  auth_type = password\n
+  project_domain_name = default\n
+  user_domain_name = default\n
+  project_name = service\n
+  username = nova\n
+  password = {{ nova_passwd }}' backup=yes state=present"
+  become: true
+
+- name: Configure nova(5)
+  lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[vnc]\n
+  vncserver_listen = $my_ip\n
+  vncserver_proxyclient_address = $my_ip' backup=yes state=present"
+  become: true
+
+- name: Configure nova(6)
+  lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[glance]\n
+  api_servers = http://{{ controller_ip }}:9292' backup=yes state=present"
+  become: true
+
+- name: Configure nova(7)
+  lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[oslo_concurrency]\n
+  lock_path = /var/lib/nova/tmp' backup=yes state=present"
+  become: true
+
+- name: Nova_api dbsync
+  shell: su -s /bin/sh -c "nova-manage api_db sync" nova
+  become: true
+
+- name: Nova dbsync
+  shell: su -s /bin/sh -c "nova-manage db sync" nova
+  become: true
+
+
+- name: Restart nova
+  service: name={{ item }} state=restarted
+  with_items:
+  - nova-api 
+  - nova-consoleauth 
+  - nova-scheduler 
+  - nova-conductor 
+  - nova-novncproxy
+  become: true

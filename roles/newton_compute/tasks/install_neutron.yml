@@ -1,0 +1,76 @@
+---
+- name: Install neutron
+  apt: name={{ item }} state=latest
+  with_items:
+  - neutron-linuxbridge-agent
+  become: true
+
+- name: Configure neutron(1)
+  lineinfile: dest=/etc/neutron/neutron.conf insertafter='^\\[DEFAULT' line={{ item  }} backup=yes state=present
+  with_items:
+  - "rpc_backend = rabbit"
+  - "auth_strategy = keystone"
+  become: true
+
+- name: Configure neutron(2)
+  lineinfile: dest=/etc/neutron/neutron.conf insertafter='^\\[keystone_authtoken' line={{ item }} backup=yes state=present
+  with_items:
+  - "auth_uri = http://{{ controller_ip }}:5000"
+  - "auth_url = http://{{ controller_ip }}:35357"
+  - "memcached_servers = {{ controller_ip }}:11211"
+  - "auth_type = password"
+  - "project_domain_name = default"
+  - "user_domain_name = default"
+  - "project_name = service"
+  - "username = neutron"
+  - "password = {{ neutron_passwd }}"
+  become: true
+
+- name: Configure neutron(3)
+  lineinfile: dest=/etc/neutron/neutron.conf insertafter='^\\[oslo_messaging_rabbit' line={{ item }} backup=yes state=present
+  with_items:
+  - "rabbit_host = {{ controller_ip }}"
+  - "rabbit_userid = openstack"
+  - "rabbit_password = {{ rabbit_passwd }}"
+  become: true
+
+- name: Configure neutron(4)
+  lineinfile: dest=/etc/neutron/plugins/ml2/linuxbridge_agent.ini insertafter='^\\[linux_bridge' line={{ item }} backup=yes state=present
+  with_items:  
+  - "physical_interface_mappings = provider:{{ provider_nic }}"
+  become: true
+
+- name: Configure neutron(5)
+  lineinfile: dest=/etc/neutron/plugins/ml2/linuxbridge_agent.ini insertafter='^\\[vxlan' line={{ item }} backup=yes state=present
+  with_items:
+  - "enable_vxlan = True"
+  - "local_ip = {{ compute_ip }}"
+  - "l2_population = True" 
+  become: true
+
+- name: Configure neutron(6)
+  lineinfile: dest=/etc/neutron/plugins/ml2/linuxbridge_agent.ini insertafter='^\\[securitygroup' line={{ item }} backup=yes state=present
+  with_items:  
+  - "enable_security_group = True"
+  - "firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver"
+  become: true
+
+- name: Configure neutron(7)
+  lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[neutron]\n
+  url = http://{{ controller_ip }}:9696\n
+  auth_url = http://{{ controller_ip}}:35357\n
+  auth_type = password\n
+  project_domain_name = default\n
+  user_domain_name = default\n
+  region_name = RegionOne\n
+  project_name = service\n
+  username = neutron\n
+  password = {{ neutron_passwd }}'"
+  become: true
+
+- name: Restart neutron
+  service: name={{ item }} state=restarted
+  with_items:
+  - nova-compute
+  - neutron-linuxbridge-agent 
+  become: true

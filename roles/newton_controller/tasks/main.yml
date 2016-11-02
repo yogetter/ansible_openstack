@@ -1,0 +1,7 @@
+---
+#- include: basic_configure.yml
+#- include: install_keystone.yml
+#- include: install_glance.yml
+#- include: install_nova.yml
+#- include: install_neutron.yml
+- include: install_dashboard.yml

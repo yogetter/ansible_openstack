@@ -1,0 +1,6 @@
+[mido_controller]
+172.20.3.72
+[newton_controller]
+192.168.0.2
+[newton_compute]
+192.168.0.3

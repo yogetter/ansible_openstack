@@ -1,0 +1,26 @@
+---
+- name: Install dashborad
+  apt: name=openstack-dashboard state=latest
+  become: true
+
+- name: Configured dahsboard(1)
+  replace: "dest=/etc/openstack-dashboard/local_settings.py regexp={{ item.reg }} replace={{ item.replace  }} backup=yes"
+  with_items:
+  - { reg: "127.0.0.1", replace: "{{ controller_ip }}"}
+  - { reg: "v2.0", replace: "v3"}
+  - { reg: "_member_", replace: "user"}
+  become: true
+
+- name: Configure dahsboard(2)
+  lineinfile: "dest=/etc/openstack-dashboard/local_settings.py insertbefore='^CACHES =' line='SESSION_ENGINE = 'django.contrib.sessions.backends.cache''  backup=yes state=present"
+  become: true
+
+- name: Configure dahsboard(3)
+  lineinfile: "dest=/etc/openstack-dashboard/local_settings.py insertbefore='^#OPENSTACK_API_VERSIONS =' line='OPENSTACK_API_VERSIONS = {\n
+      \"identity\": 3,\n
+  }'  backup=yes state=present"
+  become: true
+
+- name: restart apache
+  service: name=apache2 state=reloaded
+  become: true

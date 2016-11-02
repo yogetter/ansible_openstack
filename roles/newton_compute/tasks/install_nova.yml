@@ -1,0 +1,70 @@
+---
+
+- name: Install nova
+  apt: name={{ item }} state=latest
+  with_items:
+  - nova-compute 
+  become: true
+
+- name: Configure nova(0)
+  replace: dest=/etc/nova/nova.conf regexp='^connection=' replace='#connection='  backup=yes
+  become: true
+
+- name: Configure nova(1)
+  lineinfile: dest=/etc/nova/nova.conf insertafter='^\\[DEFAULT' line={{ item  }} backup=yes state=present
+  with_items:
+  - "transport_url = rabbit://openstack:{{ rabbit_passwd}}@{{ controller_ip }}" 
+  - "auth_strategy = keystone"
+  - "my_ip = {{ compute_ip  }}"
+  - "use_neutron = True"
+  - "firewall_driver = nova.virt.firewall.NoopFirewallDriver"
+  become: true
+
+- name: Configure nova(2)
+  lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present
+  with_items:  
+  - "\n[keystone_authtoken]"
+  - "auth_uri = http://{{ controller_ip }}:5000"
+  - "auth_url = http://{{ controller_ip }}:35357"
+  - "memcached_servers = {{ controller_ip }}:11211"
+  - "auth_type = password"
+  - "project_domain_name = default"
+  - "user_domain_name = default"
+  - "project_name = service"
+  - "username = nova"
+  - "password = {{ nova_passwd }}"
+  become: true
+
+- name: Configure nova(3)
+  lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present 
+  with_items:
+  - "\n[vnc]"
+  - "enabled = True"
+  - "vncserver_listen = 0.0.0.0"
+  - "vncserver_proxyclient_address = $my_ip"
+  - "novncproxy_base_url = http://{{ controller_ip }}:6080/vnc_auto.html"
+  become: true
+
+- name: Configure nova(4)
+  lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present
+  with_items:
+  - "\n[glance]"
+  - "api_servers = http://{{ controller_ip }}:9292"
+  become: true
+
+- name: Configure nova(5)
+  lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present
+  with_item:
+  - "\n[oslo_concurrency]"
+  - "lock_path = /var/lib/nova/tmp"
+  become: true
+
+- name: Check acceleration
+  script: "./roles/newton_compute/scripts/check_acceleration.sh"
+  become: true
+
+- name: Restart nova
+  service: name={{ item }} state=restarted
+  with_items:
+  - nova-compute 
+  become: true

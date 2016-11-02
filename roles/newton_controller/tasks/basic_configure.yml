@@ -1,0 +1,64 @@
+---
+
+#- name: Configrued network nic
+#  lineinfile: "dest=/etc/network/interfaces insertafter=EOF line='auto {{ provider_nic }}\n 
+#              iface {{ provider_nic  }} inet manual\n
+#              up ip link set dev $IFACE up\n
+#              down ip link set dev $IFACE down'  state=present"
+#  become: true
+
+- name: Install NTP
+  apt: name=chrony state=latest
+  become: true
+
+
+- name: Install software common
+  apt: name=software-properties-common state=latest
+  become: true
+
+
+- name: Install repository's key
+  shell: add-apt-repository cloud-archive:newton 
+  become: true
+
+- name: APT update & updgrade
+  apt: update_cache=yes upgrade=dist
+  become: true
+
+- name: Openstack Environment
+  apt: name={{ item }} state=latest
+  with_items:
+  - python-openstackclient
+  - mariadb-server
+  - python-pymysql
+  - python-mysqldb 
+  - rabbitmq-server
+  - memcached 
+  - python-memcache
+  become: true  
+
+- name: Create mysql config file
+  template: src=openstack.cnf.j2 dest=/etc/mysql/mariadb.conf.d/openstack.cnf
+  become: true
+
+# Do mysql_secure_install
+- include: mysql_secure_install.yml
+
+- name: Configure memcached
+  lineinfile: "dest=/etc/memcached.conf regexp='^-l' line='-l {{ controller_ip  }}'  state=present"
+  become: true
+
+- name: Restart Mariadb & Memcached 
+  service: name={{ item }} state=restarted
+  with_items:
+  - mysql
+  - memcached
+  become: true
+
+- name: Configure message server 
+  rabbitmq_user: user=openstack password={{ rabbit_passwd }}  
+                 configure_priv=.*
+                 read_priv=.*
+                 write_priv=.*
+                 state=present
+  become: true

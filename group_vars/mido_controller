@@ -1,0 +1,4 @@
+controller_ip: 172.20.3.72
+db_passwd: 123
+rabbit_passwd: 123
+keystone_passwd: 123

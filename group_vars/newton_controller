@@ -1,0 +1,10 @@
+provider_nic: enp0s9
+controller_ip: 192.168.0.2
+admin_passwd: 123
+db_passwd: 123
+rabbit_passwd: 123
+keystone_passwd: 123
+glance_passwd: 123
+nova_passwd: 123
+neutron_passwd: 123
+metadata_secret: pa$$w0rd

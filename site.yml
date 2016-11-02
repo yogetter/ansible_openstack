@@ -1,0 +1,14 @@
+# hosts define
+- name: Configure controller 
+  hosts: newton_controller
+  remote_user: test
+
+  roles:
+    - newton_controller 
+
+- name: Configure compute
+  hosts: newton_compute
+  remote_user: test
+
+  roles:
+    - newton_compute

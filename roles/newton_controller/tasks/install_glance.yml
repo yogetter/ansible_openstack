@@ -1,0 +1,80 @@
+---
+- name: Create glance databases
+  mysql_db: name=glance state=present login_password={{ db_passwd  }}
+  become: true 
+
+- name: Create glance user
+  mysql_user: name=glance password={{ glance_passwd  }}  host={{ item  }} priv='glance.*:ALL,GRANT' login_password={{ db_passwd  }} state=present 
+  with_items:
+  - '%'
+  - localhost
+  become: true
+
+- name: Create glance environment in keystone
+  script: "./roles/newton_controller/scripts/create_glance_environment.sh {{ controller_ip  }} {{ glance_passwd  }}"
+  become: true
+
+- name: Install glance
+  apt: name=glance state=latest
+  become: true
+
+- name: Configure glance-api(1)
+  lineinfile: dest=/etc/glance/glance-api.conf insertafter='^\\[database' line='connection = mysql+pymysql://glance:{{ glance_passwd  }}@{{ controller_ip  }}/glance'  state=present
+  become: true
+
+- name: Configure glance-api(2)
+  lineinfile: "dest=/etc/glance/glance-api.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://{{ controller_ip }}:5000\n
+  auth_url = http://{{ controller_ip }}:35357\n
+  memcached_servers = {{ controller_ip }}:11211\n
+  auth_type = password\n
+  project_domain_name = default\n
+  user_domain_name = default\n
+  project_name = service\n
+  username = glance\n
+  password = {{ glance_passwd }}\n' state=present"
+  become: true
+
+- name: Configure glance-api(3)
+  lineinfile: dest=/etc/glance/glance-api.conf insertafter='^\\[paste_deploy' line='flavor = keystone'  state=present
+  become: true
+
+- name: Configure glance-api(4)
+  lineinfile: "dest=/etc/glance/glance-api.conf insertafter='^\\[glance_store' line='stores = file,http\n
+  default_store = file\n
+  filesystem_store_datadir = /var/lib/glance/images/ \n'  state=present"
+  become: true
+
+- name: Configure glance-registry(1)
+  lineinfile: dest=/etc/glance/glance-registry.conf insertafter='^\\[database' line='connection = mysql+pymysql://glance:{{ glance_passwd  }}@{{ controller_ip  }}/glance'  state=present
+  become: true
+
+- name: Configure glance-register(2)
+  lineinfile: "dest=/etc/glance/glance-registry.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://{{ controller_ip }}:5000\n
+  auth_url = http://{{ controller_ip }}:35357\n
+  memcached_servers = {{ controller_ip }}:11211\n
+  auth_type = password\n
+  project_domain_name = default\n
+  user_domain_name = default\n
+  project_name = service\n
+  username = glance\n
+  password = {{ glance_passwd }}\n' state=present"
+  become: true
+
+- name: Configure glance-register(3)
+  lineinfile: dest=/etc/glance/glance-registry.conf insertafter='^\\[paste_deploy' line='flavor = keystone'  state=present
+  become: true
+
+- name: Glance dbsync
+  shell: su -s /bin/sh -c "glance-manage db_sync" glance
+  become: true
+
+- name: Restart glance
+  service: name={{ item }} state=restarted
+  with_items:
+  - glance-registry
+  - glance-api
+  become: true
+
+- name: Create image
+  script: ./roles/newton_controller/scripts/create_glance_image.sh {{ controller_ip }}
+  become: true

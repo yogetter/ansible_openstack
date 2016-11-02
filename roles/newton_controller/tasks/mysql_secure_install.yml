@@ -1,0 +1,14 @@
+---
+# do mysql_secure_install
+
+- name: Set root password
+  mysql_user: user=root password={{ db_passwd }} host=localhost
+  become: true
+
+- name: Delete anonymous 
+  mysql_user: user="" state=absent login_password={{ db_passwd }}
+  become: true
+
+- name: Remove test databases
+  mysql_db: db=test state=absent login_password={{ db_passwd }}
+  become: true

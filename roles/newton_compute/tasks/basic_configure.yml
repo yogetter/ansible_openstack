@@ -1,0 +1,30 @@
+---
+
+#- name: Configrued network nic
+#  lineinfile: "dest=/etc/network/interfaces insertafter=EOF line='auto {{ provider_nic }}\n 
+#              iface {{ provider_nic  }} inet manual\n
+#              up ip link set dev $IFACE up\n
+#              down ip link set dev $IFACE down'  state=present"
+#  become: true
+
+- name: Install NTP
+  apt: name=chrony state=latest
+  become: true
+
+- name: Install software common
+  apt: name=software-properties-common state=latest
+  become: true
+
+- name: Install repository's key
+  shell: add-apt-repository cloud-archive:newton 
+  become: true
+
+- name: APT update & updgrade
+  apt: update_cache=yes upgrade=dist
+  become: true
+
+- name: Openstack Environment
+  apt: name={{ item }} state=latest
+  with_items:
+  - python-openstackclient
+  become: true  
