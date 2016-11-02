@@ -1,5 +1,6 @@
 provider_nic: enp0s9
 controller_ip: 192.168.0.2
+compute_ip: 192.168.0.3
 admin_passwd: 123
 db_passwd: 123
 rabbit_passwd: 123
