@@ -15,7 +15,7 @@
   become: true
 
 - name: Configure keystone connection
-  lineinfile: dest=/etc/keystone/keystone.conf regexp='^connection' line='connection = mysql+pymysql://keystone:{{ keystone_passwd  }}@{{ controller_ip  }}/keystone'  state=present
+  lineinfile: dest=/etc/keystone/keystone.conf regexp='^connection' line='connection = mysql+pymysql://keystone:{{ keystone_passwd  }}@controller/keystone'  state=present
   become: true
 
 - name: Configure keystone provider
@@ -36,9 +36,9 @@
 
 - name: Initialize Fernet key(3)
   shell: "keystone-manage bootstrap --bootstrap-password {{ admin_passwd }} \
-  --bootstrap-admin-url http://{{ controller_ip  }}:35357/v3/ \
-  --bootstrap-internal-url http://{{ controller_ip }}:35357/v3/ \
-  --bootstrap-public-url http://{{ controller_ip }}:5000/v3/ \
+  --bootstrap-admin-url http://controller:35357/v3/ \
+  --bootstrap-internal-url http://controller:35357/v3/ \
+  --bootstrap-public-url http://controller:5000/v3/ \
   --bootstrap-region-id RegionOne"
   become: true
 
@@ -47,7 +47,7 @@
   become: true
 
 - name: Run script
-  script: "./roles/newton_controller/scripts/create_keystone_environment.sh {{ controller_ip  }} none {{ admin_passwd }}" 
+  script: "./roles/newton_controller/scripts/create_keystone_environment.sh controller none {{ admin_passwd }}" 
   become: true
 
 - name: Create adminrc

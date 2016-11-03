@@ -15,9 +15,9 @@
 - name: Configure neutron(2)
   lineinfile: dest=/etc/neutron/neutron.conf insertafter='^\\[keystone_authtoken' line={{ item }} backup=yes state=present
   with_items:
-  - "auth_uri = http://{{ controller_ip }}:5000"
-  - "auth_url = http://{{ controller_ip }}:35357"
-  - "memcached_servers = {{ controller_ip }}:11211"
+  - "auth_uri = http://controller:5000"
+  - "auth_url = http://controller:35357"
+  - "memcached_servers = controller:11211"
   - "auth_type = password"
   - "project_domain_name = default"
   - "user_domain_name = default"
@@ -29,7 +29,7 @@
 - name: Configure neutron(3)
   lineinfile: dest=/etc/neutron/neutron.conf insertafter='^\\[oslo_messaging_rabbit' line={{ item }} backup=yes state=present
   with_items:
-  - "rabbit_host = {{ controller_ip }}"
+  - "rabbit_host = controller"
   - "rabbit_userid = openstack"
   - "rabbit_password = {{ rabbit_passwd }}"
   become: true
@@ -57,8 +57,8 @@
 
 - name: Configure neutron(7)
   lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[neutron]\n
-  url = http://{{ controller_ip }}:9696\n
-  auth_url = http://{{ controller_ip}}:35357\n
+  url = http://controller:9696\n
+  auth_url = http://controller:35357\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n

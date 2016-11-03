@@ -15,7 +15,7 @@
   become: true
 
 - name: Create nova environment in keystone
-  script: "./roles/newton_controller/scripts/create_nova_environment.sh {{ controller_ip  }} {{ nova_passwd  }} {{ admin_passwd }}"
+  script: "./roles/newton_controller/scripts/create_nova_environment.sh controller {{ nova_passwd  }} {{ admin_passwd }}"
   become: true
 
 - name: Install nova
@@ -35,25 +35,25 @@
 - name: Configure nova(2)
   lineinfile: dest=/etc/nova/nova.conf insertafter={{ item.insertafter  }} line={{ item.line  }} backup=yes state=present
   with_items:
-  - { insertafter: "^\\[database", line: "connection = mysql+pymysql://nova:{{ nova_passwd  }}@{{ controller_ip  }}/nova" }
-  - { insertafter: "^\\[api_database", line: "connection = mysql+pymysql://nova:{{ nova_passwd  }}@{{ controller_ip  }}/nova_api" }
+  - { insertafter: "^\\[database", line: "connection = mysql+pymysql://nova:{{ nova_passwd  }}@controller/nova" }
+  - { insertafter: "^\\[api_database", line: "connection = mysql+pymysql://nova:{{ nova_passwd  }}@controller/nova_api" }
   become: true
 
 - name: Configure nova(3)
   lineinfile: dest=/etc/nova/nova.conf insertafter='^\\[DEFAULT' line={{ item  }} backup=yes state=present
   with_items:
-  - "transport_url = rabbit://openstack:{{ rabbit_passwd}}@{{ controller_ip }}" 
+  - "transport_url = rabbit://openstack:{{ rabbit_passwd}}@controller" 
   - "auth_strategy = keystone"
-  - "my_ip = {{ controller_ip  }}"
+  - "my_ip = {{ controller_ip }}"
   - "use_neutron = True"
   - "firewall_driver = nova.virt.firewall.NoopFirewallDriver"
   become: true
 
 - name: Configure nova(4)
   lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[keystone_authtoken]\n
-  auth_uri = http://{{ controller_ip }}:5000\n
-  auth_url = http://{{ controller_ip }}:35357\n
-  memcached_servers = {{ controller_ip }}:11211\n
+  auth_uri = http://controller:5000\n
+  auth_url = http://controller:35357\n
+  memcached_servers = controller:11211\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n
@@ -70,7 +70,7 @@
 
 - name: Configure nova(6)
   lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[glance]\n
-  api_servers = http://{{ controller_ip }}:9292' backup=yes state=present"
+  api_servers = http://controller:9292' backup=yes state=present"
   become: true
 
 - name: Configure nova(7)

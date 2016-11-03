@@ -11,7 +11,7 @@
   become: true
 
 - name: Create glance environment in keystone
-  script: "./roles/newton_controller/scripts/create_glance_environment.sh {{ controller_ip  }} {{ glance_passwd  }} {{ admin_passwd }}"
+  script: "./roles/newton_controller/scripts/create_glance_environment.sh controller {{ glance_passwd  }} {{ admin_passwd }}"
   become: true
 
 - name: Install glance
@@ -19,13 +19,13 @@
   become: true
 
 - name: Configure glance-api(1)
-  lineinfile: dest=/etc/glance/glance-api.conf insertafter='^\\[database' line='connection = mysql+pymysql://glance:{{ glance_passwd  }}@{{ controller_ip  }}/glance'  state=present
+  lineinfile: dest=/etc/glance/glance-api.conf insertafter='^\\[database' line='connection = mysql+pymysql://glance:{{ glance_passwd  }}@controller/glance'  state=present
   become: true
 
 - name: Configure glance-api(2)
-  lineinfile: "dest=/etc/glance/glance-api.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://{{ controller_ip }}:5000\n
-  auth_url = http://{{ controller_ip }}:35357\n
-  memcached_servers = {{ controller_ip }}:11211\n
+  lineinfile: "dest=/etc/glance/glance-api.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://controller:5000\n
+  auth_url = http://controller:35357\n
+  memcached_servers = controller:11211\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n
@@ -45,13 +45,13 @@
   become: true
 
 - name: Configure glance-registry(1)
-  lineinfile: dest=/etc/glance/glance-registry.conf insertafter='^\\[database' line='connection = mysql+pymysql://glance:{{ glance_passwd  }}@{{ controller_ip  }}/glance'  state=present
+  lineinfile: dest=/etc/glance/glance-registry.conf insertafter='^\\[database' line='connection = mysql+pymysql://glance:{{ glance_passwd  }}@controller/glance'  state=present
   become: true
 
 - name: Configure glance-register(2)
-  lineinfile: "dest=/etc/glance/glance-registry.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://{{ controller_ip }}:5000\n
-  auth_url = http://{{ controller_ip }}:35357\n
-  memcached_servers = {{ controller_ip }}:11211\n
+  lineinfile: "dest=/etc/glance/glance-registry.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://controller:5000\n
+  auth_url = http://controller:35357\n
+  memcached_servers = controller:11211\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n
@@ -76,5 +76,5 @@
   become: true
 
 - name: Create image
-  script: ./roles/newton_controller/scripts/create_glance_image.sh {{ controller_ip }}
+  script: ./roles/newton_controller/scripts/create_glance_image.sh controller none {{ admin_passwd }}
   become: true

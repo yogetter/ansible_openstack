@@ -33,3 +33,9 @@
   lineinfile: "dest=/etc/hosts line='{{ controller_ip }} controller\n
   {{ compute_ip }} compute' state=present"
   become: true
+
+- name: Configure nic
+  lineinfile: "dest=/etc/network/interfaces line='iface {{ provider_nic }} inet manual\n
+  up ip link set dev $IFACE up\n
+  down ip link set dev $IFACE down' state=present"
+  become: true

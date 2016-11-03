@@ -11,7 +11,7 @@
   become: true
 
 - name: Create neutron environment in keystone
-  script: "./roles/newton_controller/scripts/create_neutron_environment.sh {{ controller_ip  }} {{ neutron_passwd }} {{ admin_passwd }}"
+  script: "./roles/newton_controller/scripts/create_neutron_environment.sh controller {{ neutron_passwd }} {{ admin_passwd }}"
   become: true
 
 - name: Install neutron
@@ -36,7 +36,7 @@
   become: true
 
 - name: Configure neutron(2)
-  lineinfile: dest=/etc/neutron/neutron.conf insertafter='\\[database' line='connection = mysql+pymysql://neutron:{{ neutron_passwd  }}@{{ controller_ip  }}/neutron'  backup=yes state=present
+  lineinfile: dest=/etc/neutron/neutron.conf insertafter='\\[database' line='connection = mysql+pymysql://neutron:{{ neutron_passwd  }}@controller/neutron'  backup=yes state=present
   become: true
 
 
@@ -53,9 +53,9 @@
   become: true
 
 - name: Configure neutron(4)
-  lineinfile: "dest=/etc/neutron/neutron.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://{{ controller_ip }}:5000\n
-  auth_url = http://{{ controller_ip }}:35357\n
-  memcached_servers = {{ controller_ip }}:11211\n
+  lineinfile: "dest=/etc/neutron/neutron.conf insertafter='^\\[keystone_authtoken' line='auth_uri = http://controller:5000\n
+  auth_url = http://controller:35357\n
+  memcached_servers = controller:11211\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n
@@ -65,13 +65,13 @@
   become: true
 
 - name: Configure neutron(5)
-  lineinfile: "dest=/etc/neutron/neutron.conf insertafter='^\\[oslo_messaging_rabbit' line='rabbit_host = {{ controller_ip }}\n
+  lineinfile: "dest=/etc/neutron/neutron.conf insertafter='^\\[oslo_messaging_rabbit' line='rabbit_host = controller\n
   rabbit_userid = openstack\n
   rabbit_password = {{ rabbit_passwd }}' backup=yes state=present"
   become: true
 
 - name: Configure neutron(6)
-  lineinfile: "dest=/etc/neutron/neutron.conf insertafter='^\\[nova' line='auth_url = http://{{ controller_ip }}:35357\n
+  lineinfile: "dest=/etc/neutron/neutron.conf insertafter='^\\[nova' line='auth_url = http://controller:35357\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n
@@ -127,19 +127,19 @@
   become: true
 
 - name: Configure neutron(15)
-  lineinfile: "dest=/etc/neutron/metadata_agent.ini insertafter='^\\[DEFAULT' line='nova_metadata_ip = {{ controller_ip }}\n
+  lineinfile: "dest=/etc/neutron/metadata_agent.ini insertafter='^\\[DEFAULT' line='nova_metadata_ip = controller\n
   metadata_proxy_shared_secret = {{ metadata_secret }}' backup=yes state=present"
   become: true
 
 - name: Configure neutron(16)
-  lineinfile: "dest=/etc/nova/nova.conf insertafter='^\\[DEFAULT' line='nova_metadata_ip = {{ controller_ip }}\n
+  lineinfile: "dest=/etc/nova/nova.conf insertafter='^\\[DEFAULT' line='nova_metadata_ip = controller\n
   metadata_proxy_shared_secret = {{ metadata_secret }}' backup=yes state=present"
   become: true
 
 - name: Configure neutron(17)
   lineinfile: "dest=/etc/nova/nova.conf insertafter='EOF' line='\n[neutron]\n
-  url = http://{{ controller_ip }}:9696\n
-  auth_url = http://{{ controller_ip}}:35357\n
+  url = http://controller:9696\n
+  auth_url = http://controller:35357\n
   auth_type = password\n
   project_domain_name = default\n
   user_domain_name = default\n

@@ -1,5 +1,4 @@
 ---
-
 - name: Install nova
   apt: name={{ item }} state=latest
   with_items:
@@ -13,9 +12,9 @@
 - name: Configure nova(1)
   lineinfile: dest=/etc/nova/nova.conf insertafter='^\\[DEFAULT' line={{ item  }} backup=yes state=present
   with_items:
-  - "transport_url = rabbit://openstack:{{ rabbit_passwd}}@{{ controller_ip }}" 
+  - "transport_url = rabbit://openstack:{{ rabbit_passwd }}@controller" 
   - "auth_strategy = keystone"
-  - "my_ip = {{ compute_ip  }}"
+  - "my_ip = {{ compute_ip }}"
   - "use_neutron = True"
   - "firewall_driver = nova.virt.firewall.NoopFirewallDriver"
   become: true
@@ -24,9 +23,9 @@
   lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present
   with_items:  
   - "\n[keystone_authtoken]"
-  - "auth_uri = http://{{ controller_ip }}:5000"
-  - "auth_url = http://{{ controller_ip }}:35357"
-  - "memcached_servers = {{ controller_ip }}:11211"
+  - "auth_uri = http://controller:5000"
+  - "auth_url = http://controller:35357"
+  - "memcached_servers = controller:11211"
   - "auth_type = password"
   - "project_domain_name = default"
   - "user_domain_name = default"
@@ -42,19 +41,19 @@
   - "enabled = True"
   - "vncserver_listen = 0.0.0.0"
   - "vncserver_proxyclient_address = $my_ip"
-  - "novncproxy_base_url = http://{{ controller_ip }}:6080/vnc_auto.html"
+  - "novncproxy_base_url = http://controller:6080/vnc_auto.html"
   become: true
 
 - name: Configure nova(4)
   lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present
   with_items:
   - "\n[glance]"
-  - "api_servers = http://{{ controller_ip }}:9292"
+  - "api_servers = http://controller:9292"
   become: true
 
 - name: Configure nova(5)
   lineinfile: dest=/etc/nova/nova.conf insertafter='EOF' line={{ item }} backup=yes state=present
-  with_item:
+  with_items:
   - "\n[oslo_concurrency]"
   - "lock_path = /var/lib/nova/tmp"
   become: true
